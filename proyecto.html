@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estructura de Datos - Proyecto Final</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* ==========================================================================
+           1. VARIABLES Y TEMAS (OSCURO / CLARO)
+           ========================================================================== */
+        :root {
+            /* --- TEMA OSCURO (Por Defecto) --- */
+            --bg-body: #1c1c1c;
+            --bg-card: #282828;
+            --bg-input: #222222;
+            --bg-container-visual: rgba(0,0,0,0.2); /* Fondo de las pilas/colas visuales */
+            --bg-arbol: radial-gradient(circle, #2a2a2a 0%, #151515 100%);
+            
+            --text-main: #ffffff;
+            --text-muted: #b3b3b3;
+            --text-inverse: #000000; /* Texto sobre colores brillantes */
+            
+            --btn-bg: #383838;
+            --btn-hover: #4a4a4a;
+            --border-color: rgba(255,255,255,0.05);
+
+            /* Acentos y Estados (Compartidos) */
+            --accent: #00bcd4;          
+            --state-success: #34d399;   
+            --state-error: #f87171;     
+            --state-info: #60a5fa;      
+            --state-delete: #ff4757;    
+            
+            --shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            --radius: 12px;
+        }
+
+        /* --- TEMA CLARO (Se activa con la clase .light-mode) --- */
+        .light-mode {
+            --bg-body: #f0f2f5;
+            --bg-card: #ffffff;
+            --bg-input: #f1f3f4;
+            --bg-container-visual: rgba(0,0,0,0.05);
+            --bg-arbol: radial-gradient(circle, #ffffff 0%, #e0e0e0 100%);
+
+            --text-main: #1c1c1c;
+            --text-muted: #65676b;
+            --text-inverse: #000000;
+
+            --btn-bg: #e4e6eb;
+            --btn-hover: #d8dadf;
+            --border-color: rgba(0,0,0,0.1);
+
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            
+            /* Ajuste de acento para contraste en blanco */
+            --accent: #00acc1; 
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: background-color 0.3s, color 0.3s; }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* ==========================================================================
+           2. BARRA DE NAVEGACIÓN
+           ========================================================================== */
+        .nav-tabs {
+            display: flex; justify-content: center; flex-wrap: wrap; align-items: center;
+            background-color: var(--bg-card);
+            padding: 1rem;
+            position: sticky; top: 0; z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            gap: 10px;
+        }
+
+        .tab-btn {
+            background: transparent; border: none;
+            color: var(--text-muted);
+            padding: 10px 20px; font-size: 1.1rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .tab-btn:hover { color: var(--text-main); background: var(--btn-bg); border-radius: 5px 5px 0 0; }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: bold; }
+
+        /* Botón de Tema */
+        .theme-toggle-btn {
+            margin-left: auto; /* Empuja el botón a la derecha */
+            background: var(--btn-bg);
+            color: var(--text-main);
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+        }
+        .theme-toggle-btn:hover { transform: scale(1.1); }
+
+        /* ==========================================================================
+           3. CONTENEDORES
+           ========================================================================== */
+        .tab-content {
+            display: none; padding: 30px;
+            max-width: 1200px; width: 100%; margin: 0 auto;
+            animation: fadeIn 0.5s ease;
+        }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h1 { text-align: center; margin-bottom: 10px; font-size: 2rem; color: var(--text-main); }
+        .subtitle { text-align: center; color: var(--text-muted); margin-bottom: 30px; }
+
+        /* ==========================================================================
+           4. CONTROLES (Inputs y Botones)
+           ========================================================================== */
+        .controls-panel {
+            background: var(--bg-card); padding: 20px; border-radius: var(--radius);
+            display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; align-items: center;
+            margin-bottom: 25px; border: 1px solid var(--border-color); box-shadow: var(--shadow);
+        }
+
+        input {
+            padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);
+            background: var(--bg-input); color: var(--text-main); font-size: 1rem; outline: none;
+        }
+        input:focus { border-color: var(--accent); }
+
+        button {
+            padding: 12px 20px; border: none; border-radius: 8px;
+            background: var(--btn-bg); color: var(--text-main); cursor: pointer;
+            font-weight: bold; display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:hover { background: var(--btn-hover); transform: translateY(-2px); }
+        
+        .btn-delete { background: rgba(255, 71, 87, 0.15); color: var(--state-delete); border: 1px solid var(--state-delete); }
+        .btn-delete:hover { background: var(--state-delete); color: white; }
+
+        .status-msg {
+            text-align: center; padding: 15px; margin-bottom: 20px; border-radius: 8px;
+            font-weight: bold; min-height: 50px; display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .status-msg.error { background: rgba(248, 113, 113, 0.2); color: var(--state-error); border: 1px solid var(--state-error); }
+        .status-msg.success { background: rgba(52, 211, 153, 0.2); color: var(--state-success); border: 1px solid var(--state-success); }
+        .status-msg.info { background: rgba(96, 165, 250, 0.2); color: var(--state-info); border: 1px solid var(--state-info); }
+
+        /* ==========================================================================
+           5. ESTILOS ESPECÍFICOS
+           ========================================================================== */
+        /* Portada */
+        .portada-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; }
+        .logo-img { max-width: 250px; width: 100%; margin-bottom: 30px; transition: transform 0.3s; }
+        .light-mode .logo-img { filter: drop-shadow(0 0 10px rgba(0,0,0,0.2)); } /* Sombra oscura en modo claro */
+        .logo-img:hover { transform: scale(1.05); }
+
+        .info-card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 15px; padding: 40px; box-shadow: var(--shadow);
+            max-width: 600px; width: 90%;
+        }
+        .info-row { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding: 15px 0; }
+        .info-row:last-child { border: none; }
+        .info-label { color: var(--accent); font-weight: bold; display: flex; align-items: center; gap: 10px; }
+
+        /* Glosario */
+        .glossary-grid { display: grid; gap: 20px; }
+        .glossary-card { background: var(--bg-card); border-radius: 10px; border: 1px solid var(--border-color); overflow: hidden; }
+        .glossary-header { padding: 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: rgba(128,128,128,0.05); }
+        .glossary-header:hover { background: rgba(128,128,128,0.1); }
+        .glossary-header h2 { margin: 0; font-size: 1.3rem; color: var(--text-main); }
+        .glossary-content { display: none; padding: 20px; border-top: 1px solid var(--border-color); animation: slideDown 0.3s; }
+        .glossary-card.active .glossary-content { display: block; }
+        @keyframes slideDown { from {opacity:0; transform:translateY(-10px);} to {opacity:1; transform:translateY(0);} }
+        .glossary-item { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+        .term-header h3 { color: var(--accent); font-size: 1.1rem; margin: 0; display: inline-block; margin-left: 10px; }
+        .definition { color: var(--text-muted); line-height: 1.6; text-align: justify; }
+
+        /* Pilas */
+        .pila-container {
+            width: 200px; min-height: 300px; margin: 0 auto;
+            border: 4px solid var(--btn-bg); border-top: none; border-radius: 0 0 15px 15px;
+            display: flex; flex-direction: column-reverse; align-items: center; padding-bottom: 10px;
+            background: var(--bg-container-visual);
+        }
+        .pila-item {
+            width: 90%; height: 50px; background: var(--btn-bg); margin-bottom: 5px;
+            display: flex; align-items: center; justify-content: center; color: var(--text-main);
+            border-radius: 6px; font-weight: bold; border: 1px solid var(--border-color);
+            animation: dropIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .pila-item.tope { background: var(--accent); color: var(--text-inverse); box-shadow: 0 0 15px rgba(0,188,212,0.4); }
+        @keyframes dropIn { from { opacity:0; transform:translateY(-50px); } to { opacity:1; transform:translateY(0); } }
+
+        /* Colas */
+        .cola-wrapper { display: flex; justify-content: center; overflow-x: auto; padding: 20px; }
+        .cola-container {
+            display: flex; gap: 10px; padding: 10px;
+            border: 2px dashed var(--text-muted); border-radius: 12px;
+        }
+        .cola-item {
+            width: 70px; height: 70px; display: flex; align-items: center; justify-content: center;
+            background: var(--bg-card); border: 2px solid var(--state-info); border-radius: 8px;
+            font-weight: bold; position: relative; transition: all 0.3s;
+        }
+        .cola-item.empty { background: transparent; border: 2px dashed var(--text-muted); color: var(--text-muted); }
+        
+        .tag-pointer {
+            position: absolute; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px;
+            color: white; white-space: nowrap; z-index: 10;
+        }
+        .tag-frente { background: var(--state-info); top: -25px; }
+        .tag-final { background: var(--state-success); bottom: -25px; }
+
+        /* Árboles */
+        .arbol-layout { display: grid; grid-template-columns: 1fr 300px; gap: 20px; height: 500px; }
+        .arbol-canvas-wrapper {
+            background: var(--bg-arbol);
+            border: 1px solid var(--border-color); border-radius: 12px; position: relative; overflow: hidden;
+        }
+        #canvas { width: 100%; height: 100%; position: absolute; }
+        #nodosDom { width: 100%; height: 100%; position: absolute; pointer-events: none; }
+        
+        .node {
+            position: absolute; width: 40px; height: 40px; background: var(--accent);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: var(--text-inverse); font-weight: bold; transform: translate(-50%, -50%);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: 0.3s;
+        }
+        .node.resaltado { background: #e91e63; color: white; transform: translate(-50%, -50%) scale(1.2); }
+        .recorridos-panel { background: var(--bg-card); padding: 15px; border-radius: 12px; overflow-y: auto; border: 1px solid var(--border-color); }
+        .recorrido-item { margin-bottom: 15px; background: var(--bg-container-visual); padding: 10px; border-radius: 8px; }
+        .recorrido-label { color: var(--accent); font-size: 0.9rem; font-weight: bold; display: block; margin-bottom: 5px; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-tabs { justify-content: space-between; }
+            .theme-toggle-btn { order: 1; }
+            .tab-btn { flex-grow: 1; justify-content: center; order: 2; width: 45%; margin-bottom: 5px; }
+            .arbol-layout { grid-template-columns: 1fr; height: auto; }
+            .arbol-canvas-wrapper { height: 350px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="nav-tabs">
+        <button class="tab-btn active" onclick="cambiarPestana(event, 'portada')">
+            <i class="fas fa-university"></i> Portada
+        </button>
+        <button class="tab-btn" onclick="cambiarPestana(event, 'glosario')">
+            <i class="fas fa-book"></i> Glosario
+        </button>
+        <button class="tab-btn" onclick="cambiarPestana(event, 'pilas')">
+            <i class="fas fa-layer-group"></i> Pilas
+        </button>
+        <button class="tab-btn" onclick="cambiarPestana(event, 'colas')">
+            <i class="fas fa-long-arrow-alt-right"></i> Cola Simple
+        </button>
+        <button class="tab-btn" onclick="cambiarPestana(event, 'colas-circulares')">
+            <i class="fas fa-sync-alt"></i> Cola Circular
+        </button>
+        <button class="tab-btn" onclick="cambiarPestana(event, 'arboles')">
+            <i class="fas fa-project-diagram"></i> Árboles
+        </button>
+
+        <button class="theme-toggle-btn" onclick="toggleTheme()" title="Cambiar Tema">
+            <i class="fas fa-sun" id="themeIcon"></i>
+        </button>
+    </nav>
+
+    <div id="portada" class="tab-content active">
+        <div class="portada-container">
+            <img src="imagen/logo-utn.png" alt="Logo UTN" class="logo-img">
+            <h1>Universidad Tecnológica</h1>
+            <p class="subtitle">Estructura de Datos - Proyecto Final Integrado</p>
+            <div class="info-card">
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-user-graduate"></i> Alumno:</span>
+                    <span>Jahir Moises Ochoa Arellano</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-chalkboard-teacher"></i> Profesor:</span>
+                    <span>Janitzin Cardenas</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-users"></i> Grupo:</span>
+                    <span>DSM-41</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-laptop-code"></i> Carrera:</span>
+                    <span>Desarrollo De Software Multiplataforma</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="glosario" class="tab-content">
+        <h1>Glosario Técnico</h1>
+        <p class="subtitle">Conceptos fundamentales de Estructura de Datos</p>
+        
+        <div class="glossary-grid">
+            <div class="glossary-card">
+                <div class="glossary-header" onclick="toggleGlossary(this)">
+                    <h2>Principios Fundamentales</h2>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="glossary-content">
+                    <div class="glossary-item">
+                        <div class="term-header"><span style="font-size:1.5em">🏛️</span> <h3>Estructura de datos</h3></div>
+                        <p class="definition">Forma en que se organizan y almacenan los datos en una computadora para que puedan ser utilizados de manera eficiente.</p>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="term-header"><span style="font-size:1.5em">🔣</span> <h3>Tipos de datos</h3></div>
+                        <p class="definition">Clasificación que especifica qué tipo de valor puede tener una variable (Entero, Flotante, Caracter) y sus operaciones.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glossary-card">
+                <div class="glossary-header" onclick="toggleGlossary(this)">
+                    <h2>Tipos de Estructuras</h2>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="glossary-content">
+                    <div class="glossary-item">
+                        <div class="term-header"><span style="font-size:1.5em">📦</span> <h3>Estáticas</h3></div>
+                        <p class="definition">Tamaño fijo en memoria definido antes de la ejecución (ej. Arreglos).</p>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="term-header"><span style="font-size:1.5em">🌱</span> <h3>Dinámicas</h3></div>
+                        <p class="definition">Tamaño variable que puede crecer o reducirse en ejecución (ej. Listas, Árboles).</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glossary-card">
+                <div class="glossary-header" onclick="toggleGlossary(this)">
+                    <h2>Conceptos de Pilas</h2>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="glossary-content">
+                    <div class="glossary-item">
+                        <div class="term-header"><span style="font-size:1.5em">🥞</span> <h3>LIFO (Last In, First Out)</h3></div>
+                        <p class="definition">Principio fundamental de la Pila: el último elemento en entrar es el primero en salir. Similar a una pila de platos.</p>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="term-header"><span style="font-size:1.5em">🔝</span> <h3>Tope (Cima)</h3></div>
+                        <p class="definition">Es el único extremo de la estructura por donde se permite insertar (Push) o eliminar (Pop) elementos.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glossary-card">
+                <div class="glossary-header" onclick="toggleGlossary(this)">
+                    <h2>Conceptos de Colas</h2>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="glossary-content">
+                    <div class="glossary-item">
+                        <div class="term-header"><span style="font-size:1.5em">⚠️</span> <h3>Overflow</h3></div>
+                        <p class="definition">Error al intentar insertar en una estructura llena.</p>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="term-header"><span style="font-size:1.5em">🕳️</span> <h3>Underflow</h3></div>
+                        <p class="definition">Error al intentar extraer de una estructura vacía.</p>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="term-header"><span style="font-size:1.5em">🔄</span> <h3>Cola Circular</h3></div>
+                        <p class="definition">Variante donde el último índice se conecta con el primero para reutilizar espacio.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glossary-card">
+                <div class="glossary-header" onclick="toggleGlossary(this)">
+                    <h2>Conceptos de Árboles</h2>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="glossary-content">
+                    <div class="glossary-item">
+                        <div class="term-header"><span style="font-size:1.5em">🌳</span> <h3>Árbol Binario</h3></div>
+                        <p class="definition">Estructura jerárquica no lineal donde cada nodo tiene, como máximo, dos hijos (izquierdo y derecho).</p>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="term-header"><span style="font-size:1.5em">🌱</span> <h3>Raíz y Hojas</h3></div>
+                        <p class="definition">La <strong>Raíz</strong> es el nodo superior del árbol. Las <strong>Hojas</strong> son nodos terminales que no tienen hijos.</p>
+                    </div>
+                    <div class="glossary-item">
+                        <div class="term-header"><span style="font-size:1.5em">🔎</span> <h3>Recorridos</h3></div>
+                        <p class="definition">Formas de visitar todos los nodos: Pre-Orden (Raíz-Izq-Der), In-Orden (Izq-Raíz-Der) y Post-Orden (Izq-Der-Raíz).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="pilas" class="tab-content">
+        <h1>Pila (Stack)</h1>
+        <p class="subtitle">LIFO: Last In, First Out</p>
+        <div class="controls-panel">
+            <input type="text" id="pilaInput" placeholder="Valor...">
+            <button onclick="pilaManager.push()">Push</button>
+            <button onclick="pilaManager.pop()">Pop</button>
+            <button onclick="pilaManager.peek()">Peek</button>
+            <button class="btn-delete" onclick="pilaManager.clear()">Vaciar</button>
+        </div>
+        <div id="pilaMsg" class="status-msg"></div>
+        <div id="pilaContainer" class="pila-container"></div>
+    </div>
+
+    <div id="colas" class="tab-content">
+        <h1>Cola Simple Lineal</h1>
+        <p class="subtitle">FIFO: First In, First Out (Estricta)</p>
+        <div class="controls-panel">
+            <input type="text" id="colaInput" placeholder="Valor...">
+            <button onclick="colaManager.enqueue()">Enqueue</button>
+            <button onclick="colaManager.dequeue()">Dequeue</button>
+            <button class="btn-delete" onclick="colaManager.reset()"><i class="fas fa-undo"></i> Reiniciar</button>
+        </div>
+        <div id="colaMsg" class="status-msg"></div>
+        <div class="cola-wrapper">
+            <div id="colaContainer" class="cola-container"></div>
+        </div>
+        <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: 10px;">
+            Nota: Si "Final" llega al límite, ocurrirá Overflow aunque borres el inicio.
+        </p>
+    </div>
+
+    <div id="colas-circulares" class="tab-content">
+        <h1>Cola Circular</h1>
+        <p class="subtitle">Optimización: Punteros giratorios</p>
+        <div class="controls-panel">
+            <input type="text" id="colaCircInput" placeholder="Valor...">
+            <button onclick="colaCircularManager.enqueue()"><i class="fas fa-sync"></i> Enqueue</button>
+            <button onclick="colaCircularManager.dequeue()">Dequeue</button>
+        </div>
+        <div id="colaCircMsg" class="status-msg"></div>
+        <div class="cola-wrapper">
+            <div id="colaCircContainer" class="cola-container"></div>
+        </div>
+    </div>
+
+    <div id="arboles" class="tab-content">
+        <h1>Árbol Binario de Búsqueda</h1>
+        <div class="controls-panel">
+            <input type="number" id="arbolInput" placeholder="Número">
+            <button onclick="arbolManager.insertar()">Insertar</button>
+            <button onclick="arbolManager.buscar()">Buscar</button>
+            <button onclick="arbolManager.aleatorio()">Aleatorio</button>
+            <button class="btn-delete" onclick="arbolManager.eliminar()">Eliminar</button>
+            <button class="btn-delete" onclick="arbolManager.limpiar()">Limpiar</button>
+        </div>
+        <div id="arbolMsg" class="status-msg"></div>
+        <div class="arbol-layout">
+            <div class="arbol-canvas-wrapper" id="arbolWrapper">
+                <canvas id="canvas"></canvas>
+                <div id="nodosDom"></div>
+            </div>
+            <div class="recorridos-panel">
+                <div class="recorrido-item">
+                    <span class="recorrido-label">Pre-Orden</span>
+                    <span id="resPre">-</span>
+                </div>
+                <div class="recorrido-item">
+                    <span class="recorrido-label">In-Orden</span>
+                    <span id="resIn">-</span>
+                </div>
+                <div class="recorrido-item">
+                    <span class="recorrido-label">Post-Orden</span>
+                    <span id="resPost">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 0. GESTOR DE TEMA ---
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const icon = document.getElementById('themeIcon');
+            if (document.body.classList.contains('light-mode')) {
+                icon.className = 'fas fa-moon'; // Cambiar a luna
+            } else {
+                icon.className = 'fas fa-sun'; // Cambiar a sol
+            }
+        }
+
+        // --- 1. UI & UTILIDADES ---
+        const UI = {
+            mostrarMensaje: (id, texto, tipo) => {
+                const el = document.getElementById(id);
+                el.textContent = texto;
+                el.className = `status-msg ${tipo}`;
+                el.style.opacity = 1;
+                setTimeout(() => { el.style.opacity = 0; }, 3000);
+            }
+        };
+
+        function cambiarPestana(evt, tabName) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            evt.currentTarget.classList.add('active');
+            if (tabName === 'arboles') setTimeout(() => arbolManager.redimensionar(), 50);
+        }
+
+        function toggleGlossary(header) { header.parentElement.classList.toggle('active'); }
+
+        // --- 2. PILAS ---
+        const pilaManager = (() => {
+            const data = []; const limit = 8;
+            const container = document.getElementById('pilaContainer');
+            const input = document.getElementById('pilaInput');
+            function render() {
+                container.innerHTML = '';
+                data.forEach((val, i) => {
+                    const div = document.createElement('div');
+                    div.className = 'pila-item'; div.textContent = val;
+                    if (i === data.length - 1) div.classList.add('tope');
+                    container.appendChild(div);
+                });
+            }
+            return {
+                push: () => {
+                    if(!input.value) return;
+                    if(data.length >= limit) return UI.mostrarMensaje('pilaMsg', 'Overflow: Pila Llena', 'error');
+                    data.push(input.value); input.value = ''; render(); UI.mostrarMensaje('pilaMsg', 'Insertado', 'success');
+                },
+                pop: () => {
+                    if(data.length === 0) return UI.mostrarMensaje('pilaMsg', 'Underflow: Pila Vacía', 'error');
+                    data.pop(); render(); UI.mostrarMensaje('pilaMsg', 'Eliminado', 'info');
+                },
+                peek: () => {
+                    if(data.length === 0) return UI.mostrarMensaje('pilaMsg', 'Pila Vacía', 'error');
+                    UI.mostrarMensaje('pilaMsg', `Tope: ${data[data.length-1]}`, 'info');
+                },
+                clear: () => { data.length=0; render(); UI.mostrarMensaje('pilaMsg', 'Vaciada', 'success'); }
+            };
+        })();
+
+        // --- 3. COLA SIMPLE ---
+        const colaManager = (() => {
+            const capacidad = 8;
+            let elementos = new Array(capacidad).fill(null);
+            let frente = 0; let final = -1;
+            const container = document.getElementById('colaContainer');
+            const input = document.getElementById('colaInput');
+            function render() {
+                container.innerHTML = '';
+                for(let i=0; i<capacidad; i++) {
+                    const div = document.createElement('div');
+                    div.className = elementos[i] !== null ? 'cola-item' : 'cola-item empty';
+                    div.textContent = elementos[i] !== null ? elementos[i] : i;
+                    if(i === frente) div.innerHTML += `<span class="tag-pointer tag-frente">Frente</span>`;
+                    if(i === final) div.innerHTML += `<span class="tag-pointer tag-final">Final</span>`;
+                    container.appendChild(div);
+                }
+            }
+            return {
+                enqueue: () => {
+                    if(!input.value) return;
+                    if(final === capacidad - 1) return UI.mostrarMensaje('colaMsg', 'OVERFLOW: Límite alcanzado', 'error');
+                    final++; elementos[final] = input.value; input.value = ''; render(); UI.mostrarMensaje('colaMsg', 'Encolado', 'success');
+                },
+                dequeue: () => {
+                    if(frente > final) return UI.mostrarMensaje('colaMsg', 'UNDERFLOW: Cola vacía', 'error');
+                    elementos[frente] = null; frente++; render(); UI.mostrarMensaje('colaMsg', 'Atendido', 'info');
+                },
+                reset: () => {
+                    elementos.fill(null); frente=0; final=-1; render(); UI.mostrarMensaje('colaMsg', 'Reiniciada', 'success');
+                }
+            };
+        })();
+
+        // --- 4. COLA CIRCULAR ---
+        const colaCircularManager = (() => {
+            const capacidad = 8;
+            let elementos = new Array(capacidad).fill(null);
+            let frente = -1; let final = -1;
+            const container = document.getElementById('colaCircContainer');
+            const input = document.getElementById('colaCircInput');
+            function render() {
+                container.innerHTML = '';
+                for(let i=0; i<capacidad; i++) {
+                    const div = document.createElement('div');
+                    div.className = elementos[i] !== null ? 'cola-item' : 'cola-item empty';
+                    div.textContent = elementos[i] !== null ? elementos[i] : i;
+                    if(i === frente && frente !== -1) div.innerHTML += `<span class="tag-pointer tag-frente">Frente</span>`;
+                    if(i === final && final !== -1) div.innerHTML += `<span class="tag-pointer tag-final">Final</span>`;
+                    container.appendChild(div);
+                }
+            }
+            return {
+                enqueue: () => {
+                    if(!input.value) return;
+                    if((final + 1) % capacidad === frente) return UI.mostrarMensaje('colaCircMsg', 'OVERFLOW: Circular Llena', 'error');
+                    if(frente === -1) { frente = 0; final = 0; }
+                    else { final = (final + 1) % capacidad; }
+                    elementos[final] = input.value; input.value = ''; render(); UI.mostrarMensaje('colaCircMsg', 'Encolado', 'success');
+                },
+                dequeue: () => {
+                    if(frente === -1) return UI.mostrarMensaje('colaCircMsg', 'UNDERFLOW: Vacía', 'error');
+                    elementos[frente] = null;
+                    if(frente === final) { frente = -1; final = -1; }
+                    else { frente = (frente + 1) % capacidad; }
+                    render(); UI.mostrarMensaje('colaCircMsg', 'Atendido', 'info');
+                }
+            };
+        })();
+
+        // --- 5. ÁRBOLES ---
+        const arbolManager = (() => {
+            class Nodo { constructor(v) { this.valor = v; this.izq = null; this.der = null; this.x = 0; this.y = 0; } }
+            let raiz = null;
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const domContainer = document.getElementById('nodosDom');
+            const input = document.getElementById('arbolInput');
+
+            function insertarR(n, v) {
+                if(v < n.valor) { n.izq ? insertarR(n.izq, v) : n.izq = new Nodo(v); }
+                else { n.der ? insertarR(n.der, v) : n.der = new Nodo(v); }
+            }
+            function buscarR(n, v) { if(!n) return null; if(v===n.valor) return n; return v<n.valor ? buscarR(n.izq,v) : buscarR(n.der,v); }
+            function minR(n) { while(n.izq) n=n.izq; return n; }
+            function eliminarR(n, v) {
+                if(!n) return null;
+                if(v < n.valor) { n.izq = eliminarR(n.izq, v); return n; }
+                else if(v > n.valor) { n.der = eliminarR(n.der, v); return n; }
+                else {
+                    if(!n.izq && !n.der) return null;
+                    if(!n.izq) return n.der; if(!n.der) return n.izq;
+                    let temp = minR(n.der); n.valor = temp.valor; n.der = eliminarR(n.der, temp.valor); return n;
+                }
+            }
+            const Rec = {
+                pre: (n,a=[]) => { if(n){ a.push(n.valor); Rec.pre(n.izq,a); Rec.pre(n.der,a); } return a; },
+                in: (n,a=[]) => { if(n){ Rec.in(n.izq,a); a.push(n.valor); Rec.in(n.der,a); } return a; },
+                post: (n,a=[]) => { if(n){ Rec.post(n.izq,a); Rec.post(n.der,a); a.push(n.valor); } return a; }
+            };
+            function calcPos(n, x, y, offset) {
+                if(!n) return; n.x = x; n.y = y;
+                calcPos(n.izq, x-offset, y+70, offset/2); calcPos(n.der, x+offset, y+70, offset/2);
+            }
+            function draw() {
+                ctx.clearRect(0,0,canvas.width,canvas.height); domContainer.innerHTML='';
+                if(raiz) {
+                    calcPos(raiz, canvas.width/2, 50, canvas.width/4);
+                    drawLines(raiz); drawNodes(raiz);
+                    document.getElementById('resPre').innerText = Rec.pre(raiz).join(' - ');
+                    document.getElementById('resIn').innerText = Rec.in(raiz).join(' - ');
+                    document.getElementById('resPost').innerText = Rec.post(raiz).join(' - ');
+                } else {
+                    ['resPre','resIn','resPost'].forEach(id=>document.getElementById(id).innerText='-');
+                }
+            }
+            function drawLines(n) {
+                if(!n) return; 
+                // Color de línea según tema (se revisa si el body tiene la clase light-mode)
+                ctx.strokeStyle = document.body.classList.contains('light-mode') ? '#999' : '#666'; 
+                ctx.lineWidth = 2;
+                if(n.izq) { ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(n.izq.x, n.izq.y); ctx.stroke(); drawLines(n.izq); }
+                if(n.der) { ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(n.der.x, n.der.y); ctx.stroke(); drawLines(n.der); }
+            }
+            function drawNodes(n) {
+                if(!n) return;
+                const el = document.createElement('div'); el.className='node'; el.textContent=n.valor;
+                el.style.left=`${n.x}px`; el.style.top=`${n.y}px`; el.id=`node-${n.valor}`;
+                domContainer.appendChild(el); drawNodes(n.izq); drawNodes(n.der);
+            }
+            return {
+                insertar: () => { const v=parseInt(input.value); if(isNaN(v)) return; !raiz ? raiz=new Nodo(v) : insertarR(raiz,v); input.value=''; draw(); UI.mostrarMensaje('arbolMsg','Insertado','success'); },
+                eliminar: () => { const v=parseInt(input.value); if(isNaN(v)) return; if(!buscarR(raiz,v)) return UI.mostrarMensaje('arbolMsg','No encontrado','error'); raiz=eliminarR(raiz,v); input.value=''; draw(); UI.mostrarMensaje('arbolMsg','Eliminado','info'); },
+                buscar: () => { const v=parseInt(input.value); if(isNaN(v)) return; const n=buscarR(raiz,v); if(n){ const el=document.getElementById(`node-${v}`); el.classList.add('resaltado'); setTimeout(()=>el.classList.remove('resaltado'),1500); UI.mostrarMensaje('arbolMsg','Encontrado','success'); } else UI.mostrarMensaje('arbolMsg','No existe','error'); },
+                aleatorio: () => { raiz=null; for(let i=0;i<7;i++) { const v=Math.floor(Math.random()*99)+1; !raiz ? raiz=new Nodo(v) : insertarR(raiz,v); } draw(); UI.mostrarMensaje('arbolMsg','Aleatorio','success'); },
+                limpiar: () => { raiz=null; draw(); UI.mostrarMensaje('arbolMsg','Limpiado','info'); },
+                redimensionar: () => { const w=document.getElementById('arbolWrapper'); canvas.width=w.offsetWidth; canvas.height=w.offsetHeight; draw(); }
+            };
+        })();
+
+        // --- INICIALIZACIÓN ---
+        window.addEventListener('load', () => {
+            colaManager.reset();
+            arbolManager.redimensionar();
+            const cc = document.getElementById('colaCircContainer');
+            for(let i=0; i<8; i++) cc.innerHTML += `<div class="cola-item empty">${i}</div>`;
+        });
+        window.addEventListener('resize', arbolManager.redimensionar);
+    </script>
+</body>
+</html>
